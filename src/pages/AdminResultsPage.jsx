@@ -41,7 +41,8 @@ const AdminResultsPage = () => {
 
   const handleExport = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/results/export', {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://olympiad-server-n02p.onrender.com/api';
+      const response = await fetch(`${API_URL}/results/export`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
         }

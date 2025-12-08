@@ -33,7 +33,8 @@ const AdminDashboard = () => {
     }
 
     // Initialize socket
-    const newSocket = io('http://localhost:5000');
+    const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || 'https://olympiad-server-n02p.onrender.com';
+    const newSocket = io(SOCKET_URL);
     setSocket(newSocket);
     newSocket.emit('admin-join');
 
