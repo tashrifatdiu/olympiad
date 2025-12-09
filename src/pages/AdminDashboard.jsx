@@ -30,7 +30,7 @@ const AdminDashboard = () => {
       if (studentToken) {
         alert('Please login as admin. Student session detected.');
       }
-      navigate('/admin/login');
+      navigate('/admin-panel/login');
       return;
     }
 
@@ -299,7 +299,7 @@ const AdminDashboard = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
     // Don't clear student tokens - they might want to switch back
-    navigate('/admin/login');
+    navigate('/admin-panel/login');
   };
 
   if (loading) {
@@ -307,7 +307,7 @@ const AdminDashboard = () => {
   }
 
   const handleViewResults = () => {
-    navigate('/admin/results');
+    navigate('/admin-panel/results');
   };
 
   return (

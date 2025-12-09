@@ -5,7 +5,7 @@ const AdminProtectedRoute = ({ children }) => {
   const adminToken = localStorage.getItem('adminToken');
 
   if (!adminToken) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/admin-panel/login" replace />;
   }
 
   return children;

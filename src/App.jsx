@@ -28,9 +28,9 @@ function App() {
             <Route path="/exam-rules" element={<ProtectedRoute><ExamRulesPage /></ProtectedRoute>} />
             <Route path="/exam" element={<ProtectedRoute><ExamPage /></ProtectedRoute>} />
             <Route path="/result" element={<ProtectedRoute><ResultPage /></ProtectedRoute>} />
-            <Route path="/admin/login" element={<AdminLoginPage />} />
-            <Route path="/admin/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-            <Route path="/admin/results" element={<AdminProtectedRoute><AdminResultsPage /></AdminProtectedRoute>} />
+            <Route path="/admin-panel/login" element={<AdminLoginPage />} />
+            <Route path="/admin-panel/dashboard" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+            <Route path="/admin-panel/results" element={<AdminProtectedRoute><AdminResultsPage /></AdminProtectedRoute>} />
           </Routes>
         </Router>
       </ExamProvider>

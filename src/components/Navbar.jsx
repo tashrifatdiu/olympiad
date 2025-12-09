@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const isAdminPage = window.location.pathname.startsWith('/admin');
+  const isAdminPage = window.location.pathname.startsWith('/admin-panel');
 
   const handleLogout = () => {
     logout();

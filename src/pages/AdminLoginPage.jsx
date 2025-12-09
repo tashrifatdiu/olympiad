@@ -26,7 +26,7 @@ const AdminLoginPage = () => {
       
       localStorage.setItem('adminToken', data.token);
       localStorage.setItem('adminUser', JSON.stringify(data.admin));
-      navigate('/admin/dashboard');
+      navigate('/admin-panel/dashboard');
     } catch (err) {
       setError(err.message || 'Login failed');
     } finally {

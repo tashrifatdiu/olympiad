@@ -12,7 +12,7 @@ const AdminResultsPage = () => {
   useEffect(() => {
     const adminToken = localStorage.getItem('adminToken');
     if (!adminToken) {
-      navigate('/admin/login');
+      navigate('/admin-panel/login');
       return;
     }
 
@@ -64,7 +64,7 @@ const AdminResultsPage = () => {
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     localStorage.removeItem('adminUser');
-    navigate('/admin/login');
+    navigate('/admin-panel/login');
   };
 
   const filteredResults = results.filter(result => {
@@ -82,7 +82,7 @@ const AdminResultsPage = () => {
       <div className="admin-header">
         <h1>📊 Exam Results</h1>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => navigate('/admin/dashboard')} className="btn btn-secondary">
+          <button onClick={() => navigate('/admin-panel/dashboard')} className="btn btn-secondary">
             Back to Dashboard
           </button>
           <button onClick={handleLogout} className="btn btn-secondary">Logout</button>
