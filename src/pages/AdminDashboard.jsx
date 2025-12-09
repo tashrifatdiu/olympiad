@@ -165,8 +165,14 @@ const AdminDashboard = () => {
         return;
       }
 
+      // Create date object from the datetime-local input (this is in local timezone)
       const scheduledTime = new Date(scheduledDateTime);
       const now = new Date();
+
+      console.log('Selected time:', scheduledDateTime);
+      console.log('Scheduled time object:', scheduledTime);
+      console.log('Current time:', now);
+      console.log('Time difference (ms):', scheduledTime - now);
 
       if (scheduledTime <= now) {
         alert('⚠️ Scheduled time must be in the future!');
@@ -178,7 +184,7 @@ const AdminDashboard = () => {
       const minutes = Math.floor((timeDiff % 3600) / 60);
       const seconds = timeDiff % 60;
 
-      const confirmMsg = `Schedule exam to start at:\n\n📅 ${scheduledTime.toLocaleDateString()}\n🕐 ${scheduledTime.toLocaleTimeString()}\n\n⏱️ Time until exam: ${hours}h ${minutes}m ${seconds}s\n\nAll students will see the same countdown and start at exactly the same time.\n\nProceed?`;
+      const confirmMsg = `Schedule exam to start at:\n\n📅 ${scheduledTime.toLocaleDateString()}\n🕐 ${scheduledTime.toLocaleTimeString()}\n\n⏱️ Time until exam: ${hours}h ${minutes}m ${seconds}s\n\n⚠️ This is YOUR LOCAL TIME\n\nAll students will see the same countdown and start at exactly the same time.\n\nProceed?`;
 
       if (!confirm(confirmMsg)) return;
 
