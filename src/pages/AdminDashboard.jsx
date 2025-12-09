@@ -102,6 +102,13 @@ const AdminDashboard = () => {
       setCountdownSeconds(prev => {
         if (prev <= 1) {
           clearInterval(countdownTimerRef.current);
+          
+          // When countdown reaches 0, refresh exam status
+          console.log('Countdown reached 0, refreshing exam status...');
+          setTimeout(() => {
+            fetchExamStatus();
+          }, 2000); // Wait 2 seconds for backend to process
+          
           return 0;
         }
         return prev - 1;

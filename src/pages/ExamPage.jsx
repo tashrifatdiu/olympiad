@@ -61,13 +61,22 @@ const ExamPage = () => {
 
     newSocket.on('exam-actually-started', (data) => {
       console.log('Exam actually started event received!', data);
-      // Transition smoothly from countdown to exam
+      
+      // INSTANT TRANSITION: No re-initialization needed
       setIsCountdownPhase(false);
       setCountdownSeconds(0);
       if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
       
-      // Re-initialize immediately to load questions and start timer
-      initializeExam();
+      // If question is already preloaded, start immediately
+      if (currentQuestion) {
+        console.log('Socket event: Question preloaded - starting exam instantly!');
+        startTimer(remainingTime);
+        startQuestionTimer();
+      } else {
+        // Fallback: Load question now
+        console.log('Socket event: Loading question...');
+        initializeExam();
+      }
     });
 
     newSocket.on('student-disqualified', (data) => {
@@ -153,15 +162,37 @@ const ExamPage = () => {
           
           console.log(`Joined during countdown. Showing ${remainingSeconds} seconds until exam starts...`);
           
-          // Show countdown on exam page
-          setIsCountdownPhase(true);
-          setCountdownSeconds(remainingSeconds);
-          setLoading(false);
+          // Store session data for later use
           setExamSession({ 
             ...sessionData, 
             isWaiting: true,
             waitSeconds: remainingSeconds
           });
+          
+          // Calculate exam times for instant start
+          const examStartTime = new Date(sessionData.startTime);
+          const examEndTime = sessionData.globalEndTime ? new Date(sessionData.globalEndTime) : new Date(sessionData.endTime);
+          const examDurationSeconds = Math.floor((examEndTime - examStartTime) / 1000);
+          setRemainingTime(examDurationSeconds);
+          setQuestionTimeLimit(sessionData.questionTimeLimit || 7);
+          
+          // CRITICAL: Preload first question during countdown for instant start
+          console.log('Preloading first question for instant start...');
+          try {
+            const questionData = await fetchClient(`/exam/question/0`);
+            console.log('First question preloaded successfully');
+            // Store but don't display yet
+            setCurrentQuestion(questionData.question);
+            setSelectedAnswer(questionData.selectedAnswer);
+          } catch (error) {
+            console.log('Could not preload question (exam not started yet):', error.message);
+            // This is expected during countdown - question will load when exam starts
+          }
+          
+          // Show countdown on exam page
+          setIsCountdownPhase(true);
+          setCountdownSeconds(remainingSeconds);
+          setLoading(false);
           
           // Start countdown timer
           startCountdownTimer(remainingSeconds);
@@ -315,10 +346,34 @@ const ExamPage = () => {
   const startCountdownTimer = (seconds) => {
     if (countdownTimerRef.current) clearInterval(countdownTimerRef.current);
     
+    // Set initial countdown value
+    setCountdownSeconds(seconds);
+    
     countdownTimerRef.current = setInterval(() => {
       setCountdownSeconds(prev => {
         if (prev <= 1) {
           clearInterval(countdownTimerRef.current);
+          
+          // INSTANT TRANSITION: No API calls, just switch UI
+          console.log('Countdown reached 0 - INSTANT START!');
+          
+          // Immediately hide countdown and show exam
+          setIsCountdownPhase(false);
+          setCountdownSeconds(0);
+          
+          // If question is already preloaded, start immediately
+          if (currentQuestion) {
+            console.log('Question preloaded - starting exam instantly!');
+            startTimer(remainingTime);
+            startQuestionTimer();
+          } else {
+            // Fallback: Load question now (shouldn't happen if preload worked)
+            console.log('Question not preloaded, loading now...');
+            setTimeout(() => {
+              initializeExam();
+            }, 500);
+          }
+          
           return 0;
         }
         return prev - 1;
