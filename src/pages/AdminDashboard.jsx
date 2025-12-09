@@ -13,11 +13,9 @@ const AdminDashboard = () => {
   const [settings, setSettings] = useState({
     questionTimeLimit: 7,
     totalQuestions: 5,
-    disqualifyOnFullscreenExit: true,
-    countdownDuration: 30 // seconds
+    disqualifyOnFullscreenExit: true
   });
   const [scheduledDateTime, setScheduledDateTime] = useState('');
-  const [useScheduledStart, setUseScheduledStart] = useState(false);
   const navigate = useNavigate();
   const countdownTimerRef = React.useRef(null);
 
@@ -128,8 +126,7 @@ const AdminDashboard = () => {
       setSettings({
         questionTimeLimit: data.questionTimeLimit,
         totalQuestions: data.totalQuestions,
-        disqualifyOnFullscreenExit: data.disqualifyOnFullscreenExit,
-        countdownDuration: data.countdownDuration || 30
+        disqualifyOnFullscreenExit: data.disqualifyOnFullscreenExit
       });
     } catch (error) {
       console.error('Failed to fetch exam status:', error);
@@ -158,9 +155,8 @@ const AdminDashboard = () => {
       return;
     }
 
-    if (useScheduledStart) {
-      // Scheduled start mode - requires datetime
-      if (!scheduledDateTime) {
+    // Always use scheduled start - requires datetime
+    if (!scheduledDateTime) {
         alert('⚠️ Please select a date and time for the exam to start.');
         return;
       }
@@ -209,31 +205,6 @@ const AdminDashboard = () => {
       } catch (error) {
         alert('❌ Failed to schedule exam: ' + error.message);
       }
-    } else {
-      // Immediate start mode - NO datetime required
-      const countdownMinutes = Math.floor(settings.countdownDuration / 60);
-      const countdownSeconds = settings.countdownDuration % 60;
-      const timeDisplay = countdownMinutes > 0 
-        ? `${countdownMinutes} minute${countdownMinutes > 1 ? 's' : ''} ${countdownSeconds > 0 ? `${countdownSeconds} seconds` : ''}`
-        : `${countdownSeconds} seconds`;
-      
-      const confirmMsg = `Start exam countdown NOW for all students?\n\nCountdown: ${timeDisplay}\n\nStudents will have ${timeDisplay} to join before the exam begins.\n\nProceed?`;
-      
-      if (!confirm(confirmMsg)) return;
-      
-      try {
-        const response = await fetchClient('/admin/exam/start', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-          }
-        });
-        alert(`✅ Exam countdown started!\n\nStudents have ${timeDisplay} to join.\nExam will begin automatically after countdown.`);
-        fetchExamStatus();
-      } catch (error) {
-        alert('❌ Failed to start exam: ' + error.message);
-      }
-    }
   };
 
   const handleStopExam = async () => {
@@ -387,50 +358,45 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Scheduled Start Option */}
-          <div style={{ background: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '2px solid #ffc107' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
-                <input
-                  type="checkbox"
-                  checked={useScheduledStart}
-                  onChange={(e) => setUseScheduledStart(e.target.checked)}
-                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
-                />
-                📅 Schedule Exam Start (Perfect Synchronization)
-              </label>
+          {/* Scheduled Start - Always Required */}
+          <div style={{ background: '#e8f5e9', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '2px solid #4caf50' }}>
+            <div style={{ marginBottom: '15px' }}>
+              <h3 style={{ color: '#2e7d32', marginBottom: '10px', fontSize: '18px' }}>
+                📅 Schedule Exam Start Time
+              </h3>
+              <p style={{ fontSize: '14px', color: '#666' }}>
+                Select the exact date and time when the exam should start
+              </p>
             </div>
             
-            {useScheduledStart && (
-              <div style={{ background: 'white', padding: '15px', borderRadius: '6px' }}>
-                <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#333' }}>
-                  Select Exam Start Date & Time:
-                </label>
-                <input
-                  type="datetime-local"
-                  value={scheduledDateTime}
-                  onChange={(e) => setScheduledDateTime(e.target.value)}
-                  min={new Date().toISOString().slice(0, 16)}
-                  style={{ 
-                    width: '100%', 
-                    padding: '12px', 
-                    fontSize: '16px', 
-                    borderRadius: '6px', 
-                    border: '2px solid #667eea',
-                    fontFamily: 'monospace'
-                  }}
-                />
-                <p style={{ marginTop: '10px', fontSize: '14px', color: '#666', lineHeight: '1.6' }}>
-                  ✅ <strong>Benefits:</strong><br/>
-                  • No alert delays - everyone gets the same countdown<br/>
-                  • Perfect synchronization across all students<br/>
-                  • Students can join anytime before scheduled start<br/>
-                  • Countdown calculated from scheduled time, not button click<br/>
-                  <br/>
-                  ⏰ <strong>Note:</strong> Time is in your local timezone (Bangladesh Time - UTC+6)
-                </p>
-              </div>
-            )}
+            <div style={{ background: 'white', padding: '15px', borderRadius: '6px' }}>
+              <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#333' }}>
+                Exam Start Date & Time:
+              </label>
+              <input
+                type="datetime-local"
+                value={scheduledDateTime}
+                onChange={(e) => setScheduledDateTime(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                style={{ 
+                  width: '100%', 
+                  padding: '12px', 
+                  fontSize: '16px', 
+                  borderRadius: '6px', 
+                  border: '2px solid #4caf50',
+                  fontFamily: 'monospace'
+                }}
+              />
+              <p style={{ marginTop: '10px', fontSize: '14px', color: '#666', lineHeight: '1.6' }}>
+                ✅ <strong>Benefits:</strong><br/>
+                • Perfect synchronization across all students<br/>
+                • Students can join anytime before scheduled start<br/>
+                • Countdown shows time remaining until exam<br/>
+                • Exam starts automatically at scheduled time<br/>
+                <br/>
+                ⏰ <strong>Note:</strong> Time is in your local timezone (Bangladesh Time - UTC+6)
+              </p>
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
@@ -440,7 +406,7 @@ const AdminDashboard = () => {
               disabled={examStatus?.isExamActive}
               style={{ flex: 1, fontSize: '18px', padding: '15px' }}
             >
-              {useScheduledStart ? '📅 Schedule Exam' : '🚀 Start Exam Now'}
+              📅 Schedule Exam
             </button>
             <button 
               onClick={handleStopExam} 
@@ -493,36 +459,7 @@ const AdminDashboard = () => {
                 />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '15px' }}>
-              <div className="form-group">
-                <label>Countdown Before Exam Starts (seconds)</label>
-                <input
-                  type="number"
-                  value={settings.countdownDuration}
-                  onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    if (value >= 20 && value <= 300) {
-                      setSettings({...settings, countdownDuration: value});
-                    }
-                  }}
-                  min="20"
-                  max="300"
-                  placeholder="20-300 seconds"
-                />
-                <small style={{ color: '#666', fontSize: '12px', marginTop: '5px', display: 'block' }}>
-                  Min: 20 seconds, Max: 5 minutes (300 seconds)
-                </small>
-              </div>
-              <div className="form-group">
-                <label>Countdown Display</label>
-                <input
-                  type="text"
-                  value={`${Math.floor(settings.countdownDuration / 60)}m ${settings.countdownDuration % 60}s`}
-                  disabled
-                  style={{ background: '#e0e0e0' }}
-                />
-              </div>
-            </div>
+
             <div className="form-group" style={{ marginTop: '15px' }}>
               <label>
                 <input

@@ -146,14 +146,12 @@ const ExamPage = () => {
         
         // If waiting for countdown to finish, show countdown on exam page
         if (sessionData.isWaitingForStart) {
-          // Calculate countdown from start time to show same number as admin
-          const countdownStartTime = new Date(sessionData.countdownStartTime);
-          const countdownDuration = sessionData.countdownDuration;
+          // Calculate countdown dynamically from scheduled start time
+          const actualStartTime = new Date(sessionData.actualStartTime);
           const now = new Date();
-          const elapsedSeconds = Math.floor((now - countdownStartTime) / 1000);
-          const remainingSeconds = Math.max(0, countdownDuration - elapsedSeconds);
+          const remainingSeconds = Math.max(0, Math.floor((actualStartTime - now) / 1000));
           
-          console.log(`Joined during countdown. Showing ${remainingSeconds} seconds (same as admin)...`);
+          console.log(`Joined during countdown. Showing ${remainingSeconds} seconds until exam starts...`);
           
           // Show countdown on exam page
           setIsCountdownPhase(true);
@@ -204,13 +202,11 @@ const ExamPage = () => {
       } else if (statusData.isWaitingForStart) {
         console.log('Session waiting for exam to start...');
         
-        // Calculate countdown from start time to show same number as admin
-        if (statusData.countdownStartTime && statusData.countdownDuration) {
-          const countdownStartTime = new Date(statusData.countdownStartTime);
-          const countdownDuration = statusData.countdownDuration;
+        // Calculate countdown dynamically from scheduled start time
+        if (statusData.actualStartTime) {
+          const actualStartTime = new Date(statusData.actualStartTime);
           const now = new Date();
-          const elapsedSeconds = Math.floor((now - countdownStartTime) / 1000);
-          const remainingSeconds = Math.max(0, countdownDuration - elapsedSeconds);
+          const remainingSeconds = Math.max(0, Math.floor((actualStartTime - now) / 1000));
           
           setIsCountdownPhase(true);
           setCountdownSeconds(remainingSeconds);
