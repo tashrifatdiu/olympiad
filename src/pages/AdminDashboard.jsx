@@ -165,14 +165,18 @@ const AdminDashboard = () => {
         return;
       }
 
-      // Create date object from the datetime-local input (this is in local timezone)
+      // datetime-local gives us: "2025-12-09T14:29"
+      // We need to treat this as Bangladesh time (UTC+6)
+      // Create date object - this interprets as LOCAL time
       const scheduledTime = new Date(scheduledDateTime);
       const now = new Date();
 
-      console.log('Selected time:', scheduledDateTime);
-      console.log('Scheduled time object:', scheduledTime);
-      console.log('Current time:', now);
-      console.log('Time difference (ms):', scheduledTime - now);
+      console.log('Selected datetime string:', scheduledDateTime);
+      console.log('Scheduled time (local):', scheduledTime.toLocaleString());
+      console.log('Scheduled time (ISO/UTC):', scheduledTime.toISOString());
+      console.log('Current time (local):', now.toLocaleString());
+      console.log('Current time (ISO/UTC):', now.toISOString());
+      console.log('Time difference (seconds):', Math.floor((scheduledTime - now) / 1000));
 
       if (scheduledTime <= now) {
         alert('⚠️ Scheduled time must be in the future!');
@@ -189,9 +193,13 @@ const AdminDashboard = () => {
       if (!confirm(confirmMsg)) return;
 
       try {
+        // Send the ISO string which includes timezone offset
+        const isoString = scheduledTime.toISOString();
+        console.log('Sending to server:', isoString);
+        
         const response = await fetchClient('/admin/exam/schedule', {
           method: 'POST',
-          body: JSON.stringify({ scheduledStartTime: scheduledDateTime }),
+          body: JSON.stringify({ scheduledStartTime: isoString }),
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
           }
@@ -417,7 +425,9 @@ const AdminDashboard = () => {
                   • No alert delays - everyone gets the same countdown<br/>
                   • Perfect synchronization across all students<br/>
                   • Students can join anytime before scheduled start<br/>
-                  • Countdown calculated from scheduled time, not button click
+                  • Countdown calculated from scheduled time, not button click<br/>
+                  <br/>
+                  ⏰ <strong>Note:</strong> Time is in your local timezone (Bangladesh Time - UTC+6)
                 </p>
               </div>
             )}
