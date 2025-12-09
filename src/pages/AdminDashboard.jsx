@@ -16,6 +16,8 @@ const AdminDashboard = () => {
     disqualifyOnFullscreenExit: true,
     countdownDuration: 30 // seconds
   });
+  const [scheduledDateTime, setScheduledDateTime] = useState('');
+  const [useScheduledStart, setUseScheduledStart] = useState(false);
   const navigate = useNavigate();
   const countdownTimerRef = React.useRef(null);
 
@@ -150,25 +152,73 @@ const AdminDashboard = () => {
   };
 
   const handleStartExam = async () => {
-    const countdownMinutes = Math.floor(settings.countdownDuration / 60);
-    const countdownSeconds = settings.countdownDuration % 60;
-    const timeDisplay = countdownMinutes > 0 
-      ? `${countdownMinutes} minute${countdownMinutes > 1 ? 's' : ''} ${countdownSeconds > 0 ? `${countdownSeconds} seconds` : ''}`
-      : `${countdownSeconds} seconds`;
-    
-    if (!confirm(`Start exam countdown for all students?\n\nStudents will have ${timeDisplay} to join before the exam begins.`)) return;
-    
-    try {
-      const response = await fetchClient('/admin/exam/start', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      alert(`Exam countdown started!\n\nStudents have ${timeDisplay} to join.\nExam will begin automatically after countdown.`);
-      fetchExamStatus();
-    } catch (error) {
-      alert('Failed to start exam: ' + error.message);
+    // Check if exam is already active
+    if (examStatus?.isExamActive) {
+      alert('⚠️ Exam is already active! Stop the current exam before starting a new one.');
+      return;
+    }
+
+    if (useScheduledStart) {
+      // Scheduled start mode - requires datetime
+      if (!scheduledDateTime) {
+        alert('⚠️ Please select a date and time for the exam to start.');
+        return;
+      }
+
+      const scheduledTime = new Date(scheduledDateTime);
+      const now = new Date();
+
+      if (scheduledTime <= now) {
+        alert('⚠️ Scheduled time must be in the future!');
+        return;
+      }
+
+      const timeDiff = Math.floor((scheduledTime - now) / 1000); // seconds until exam
+      const hours = Math.floor(timeDiff / 3600);
+      const minutes = Math.floor((timeDiff % 3600) / 60);
+      const seconds = timeDiff % 60;
+
+      const confirmMsg = `Schedule exam to start at:\n\n📅 ${scheduledTime.toLocaleDateString()}\n🕐 ${scheduledTime.toLocaleTimeString()}\n\n⏱️ Time until exam: ${hours}h ${minutes}m ${seconds}s\n\nAll students will see the same countdown and start at exactly the same time.\n\nProceed?`;
+
+      if (!confirm(confirmMsg)) return;
+
+      try {
+        const response = await fetchClient('/admin/exam/schedule', {
+          method: 'POST',
+          body: JSON.stringify({ scheduledStartTime: scheduledDateTime }),
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+        alert(`✅ Exam scheduled successfully!\n\nExam will start at: ${scheduledTime.toLocaleString()}\n\nAll students will see synchronized countdown.`);
+        fetchExamStatus();
+      } catch (error) {
+        alert('❌ Failed to schedule exam: ' + error.message);
+      }
+    } else {
+      // Immediate start mode - NO datetime required
+      const countdownMinutes = Math.floor(settings.countdownDuration / 60);
+      const countdownSeconds = settings.countdownDuration % 60;
+      const timeDisplay = countdownMinutes > 0 
+        ? `${countdownMinutes} minute${countdownMinutes > 1 ? 's' : ''} ${countdownSeconds > 0 ? `${countdownSeconds} seconds` : ''}`
+        : `${countdownSeconds} seconds`;
+      
+      const confirmMsg = `Start exam countdown NOW for all students?\n\nCountdown: ${timeDisplay}\n\nStudents will have ${timeDisplay} to join before the exam begins.\n\nProceed?`;
+      
+      if (!confirm(confirmMsg)) return;
+      
+      try {
+        const response = await fetchClient('/admin/exam/start', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+          }
+        });
+        alert(`✅ Exam countdown started!\n\nStudents have ${timeDisplay} to join.\nExam will begin automatically after countdown.`);
+        fetchExamStatus();
+      } catch (error) {
+        alert('❌ Failed to start exam: ' + error.message);
+      }
     }
   };
 
@@ -323,6 +373,50 @@ const AdminDashboard = () => {
             </div>
           </div>
 
+          {/* Scheduled Start Option */}
+          <div style={{ background: '#fff3cd', padding: '20px', borderRadius: '8px', marginBottom: '20px', border: '2px solid #ffc107' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '15px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '16px', fontWeight: 'bold' }}>
+                <input
+                  type="checkbox"
+                  checked={useScheduledStart}
+                  onChange={(e) => setUseScheduledStart(e.target.checked)}
+                  style={{ width: '20px', height: '20px', cursor: 'pointer' }}
+                />
+                📅 Schedule Exam Start (Perfect Synchronization)
+              </label>
+            </div>
+            
+            {useScheduledStart && (
+              <div style={{ background: 'white', padding: '15px', borderRadius: '6px' }}>
+                <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#333' }}>
+                  Select Exam Start Date & Time:
+                </label>
+                <input
+                  type="datetime-local"
+                  value={scheduledDateTime}
+                  onChange={(e) => setScheduledDateTime(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  style={{ 
+                    width: '100%', 
+                    padding: '12px', 
+                    fontSize: '16px', 
+                    borderRadius: '6px', 
+                    border: '2px solid #667eea',
+                    fontFamily: 'monospace'
+                  }}
+                />
+                <p style={{ marginTop: '10px', fontSize: '14px', color: '#666', lineHeight: '1.6' }}>
+                  ✅ <strong>Benefits:</strong><br/>
+                  • No alert delays - everyone gets the same countdown<br/>
+                  • Perfect synchronization across all students<br/>
+                  • Students can join anytime before scheduled start<br/>
+                  • Countdown calculated from scheduled time, not button click
+                </p>
+              </div>
+            )}
+          </div>
+
           <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
             <button 
               onClick={handleStartExam} 
@@ -330,7 +424,7 @@ const AdminDashboard = () => {
               disabled={examStatus?.isExamActive}
               style={{ flex: 1, fontSize: '18px', padding: '15px' }}
             >
-              🚀 Start Exam for All
+              {useScheduledStart ? '📅 Schedule Exam' : '🚀 Start Exam Now'}
             </button>
             <button 
               onClick={handleStopExam} 
@@ -343,7 +437,6 @@ const AdminDashboard = () => {
             <button 
               onClick={handleClearExamData} 
               className="btn btn-secondary"
-              disabled={examStatus?.isExamActive}
               style={{ flex: 1, fontSize: '18px', padding: '15px', background: '#ff9800', color: 'white' }}
             >
               🗑️ Clear Exam Data
